@@ -1,17 +1,17 @@
 {
-  "name": "miback",
-  "private": true,
-  "version": "0.0.0",
-  "type":"module" ,
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "json-server": "^0.17.4"
   }
+}
+  },
+  "name": "back-taskapp",
+  "version": "1.0.0",
+  "main": "server.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Brenda Mollaret",
+  "license": "",
+  "description": ""
 }
