@@ -2,14 +2,14 @@
   "dependencies": {
     "json-server": "^0.17.4"
   },
-  "name": "back-argprograma-taskapp",
+  "name": "back-taskapp",
   "version": "1.0.0",
   "main": "server.js",
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Brenda Mollaret",
+  "author": "Racied",
   "license": "",
   "description": ""
 }
