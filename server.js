@@ -1,4 +1,5 @@
 const jsonServer = require("json-server");
+const fetch = require("node-fetch"); // Asegúrate de tener instalado el paquete 'node-fetch'
 const server = jsonServer.create();
 const router = jsonServer.router("https://api.jsonbin.io/v3/b/65a5601d266cfc3fde78fe86/latest");
 const middlewares = jsonServer.defaults();
@@ -37,20 +38,24 @@ server.post("/tasks", async (req, res) => {
     newTask.id = Date.now();
     db.tasks.push(newTask);
 
-    // Actualizar datos en JSONBin.io utilizando XMLHttpRequest
-    const xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState === XMLHttpRequest.DONE) {
-        console.log(xhr.responseText);
-      }
-    };
+    // Actualizar datos en JSONBin.io utilizando fetch
+    const response = await fetch("https://api.jsonbin.io/v3/b/65a5601d266cfc3fde78fe86", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Master-Key": masterKey,
+      },
+      body: JSON.stringify({ tasks: db.tasks }),
+    });
 
-    xhr.open("PUT", "https://api.jsonbin.io/v3/b/65a5601d266cfc3fde78fe86", true);
-    xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.setRequestHeader("X-Master-Key", masterKey);
-    xhr.send(JSON.stringify({ tasks: db.tasks }));
-
-    res.json(newTask);
+    // Verificar si la actualización fue exitosa
+    if (response.ok) {
+      console.log("Datos actualizados correctamente en JSONBin.io");
+      res.json(newTask);
+    } else {
+      console.error("Error al actualizar datos en JSONBin.io:", response.statusText);
+      res.status(500).send('Error interno del servidor');
+    }
   } catch (error) {
     console.error('Error al agregar tarea:', error);
     res.status(500).send('Error interno del servidor');
