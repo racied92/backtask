@@ -9,10 +9,17 @@ server.use(middlewares);
 // No necesitas inicializar 'db' con datos al comienzo ya que lo obtendrás de JSONBin.io
 let db;
 
+// Clave de API MASTER
+const masterKey = "tu_clave_de_api_master_aqui";
+
 // Esta función obtiene los datos desde JSONBin.io y establece 'db' cuando el servidor se inicia
 async function initData() {
   try {
-    const response = await router.db.read();
+    const response = await router.db.read({
+      headers: {
+        "X-MASTER-KEY": masterKey,
+      },
+    });
     db = response;
     console.log("Datos cargados correctamente desde JSONBin.io");
   } catch (error) {
@@ -31,7 +38,11 @@ server.post("/tasks", async (req, res) => {
     db.tasks.push(newTask);
 
     // Actualizar datos en JSONBin.io
-    await router.db.write(db);
+    await router.db.write(db, {
+      headers: {
+        "X-MASTER-KEY": masterKey,
+      },
+    });
 
     res.json(newTask);
   } catch (error) {
