@@ -6,11 +6,11 @@ const middlewares = jsonServer.defaults();
 server.use(jsonServer.bodyParser);
 server.use(middlewares);
 
+// Clave de API MASTER
+const masterKey = "$2a$10$OHQUQ5Pr4sVQgCbq9L7/yut67KgIRRWeLB8TXczMHI76bTu/NtW/m";
+
 // No necesitas inicializar 'db' con datos al comienzo ya que lo obtendrás de JSONBin.io
 let db;
-
-// Clave de API MASTER
-const masterKey = "tu_clave_de_api_master_aqui";
 
 // Esta función obtiene los datos desde JSONBin.io y establece 'db' cuando el servidor se inicia
 async function initData() {
@@ -37,12 +37,18 @@ server.post("/tasks", async (req, res) => {
     newTask.id = Date.now();
     db.tasks.push(newTask);
 
-    // Actualizar datos en JSONBin.io
-    await router.db.write(db, {
-      headers: {
-        "X-MASTER-KEY": masterKey,
-      },
-    });
+    // Actualizar datos en JSONBin.io utilizando XMLHttpRequest
+    const xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        console.log(xhr.responseText);
+      }
+    };
+
+    xhr.open("PUT", "https://api.jsonbin.io/v3/b/65a5601d266cfc3fde78fe86", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.setRequestHeader("X-Master-Key", masterKey);
+    xhr.send(JSON.stringify({ tasks: db.tasks }));
 
     res.json(newTask);
   } catch (error) {
