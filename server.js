@@ -1,59 +1,44 @@
+// JSON Server module
 const jsonServer = require("json-server");
-const fetch = require("node-fetch");
 const server = jsonServer.create();
-const fs = require("fs");
-const path = require("path");
-const filePath = path.join(__dirname, "db.json");
+const router = jsonServer.router("db.json");
 
-// Esta función obtiene los datos desde el archivo db.json y establece 'db' cuando el servidor se inicia
-function initData() {
-  try {
-    const data = fs.readFileSync(filePath, "utf8");
-    console.log("Datos cargados correctamente desde db.json");
-    return JSON.parse(data);
-  } catch (error) {
-    console.error("Error al cargar datos desde db.json:", error);
-    throw error;
-  }
-}
+// Make sure to use the default middleware
+const middlewares = jsonServer.defaults();
 
-let db;
+server.use(middlewares);
 
-// Llamamos a la función para cargar los datos cuando el servidor se inicia
-initData().then(initialData => {
-  db = initialData;
-}).catch(err => {
-  console.error(err);
+// Parse JSON in POST and PUT requests
+server.use(jsonServer.bodyParser);
+
+// Add custom route here if needed
+server.use(
+  jsonServer.rewriter({
+    "/api/*": "/$1",
+  })
+);
+
+// Custom route to handle both POST and PUT requests
+server.post("/api/*", (req, res, next) => {
+  // Handle POST request (create)
+  router.db.object = { ...router.db.object, ...req.body };
+  res.jsonp(req.body);
 });
 
-// Agregar una nueva tarea (POST)
-server.post("/tasks", async (req, res) => {
-  try {
-    const newTask = req.body;
-    newTask.id = Date.now();
-    db.tasks.push(newTask);
-
-    // Actualizar datos en el archivo db.json
-    fs.writeFileSync(filePath, JSON.stringify(db, null, 2));
-
-    console.log("Datos actualizados correctamente en db.json");
-    res.json(newTask);
-  } catch (error) {
-    console.error('Error al agregar tarea:', error);
-    res.status(500).send('Error interno del servidor');
-  }
+server.put("/api/*", (req, res, next) => {
+  // Handle PUT request (update)
+  router.db.object = { ...router.db.object, ...req.body };
+  res.jsonp(req.body);
 });
 
-// Obtener todas las tareas (GET)
-server.get("/tasks", (req, res) => {
-  res.json(db.tasks);
-});
+// Use router for other HTTP methods (GET, DELETE, etc.)
+server.use(router);
 
-// Resto de las rutas...
-
+// Listen to port
 const PORT = process.env.PORT || 3000;
-
-// Escuchar en el puerto configurado por Render
 server.listen(PORT, () => {
   console.log(`JSON Server is running on port ${PORT}`);
 });
+
+// Export the Server API
+module.exports = server;
