@@ -14,7 +14,7 @@ const auth = createAppAuth({
   appId: 797731,
   privateKey: privateKey,
   clientId: Iv1.e36fde8b5ca36539,
-  clientSecret: YOUR_CLIENT_SECRET,
+  clientSecret: cc8c712ae5a4fe012461bd87a5efbf652d100a0e,
 });
 
 let db;
