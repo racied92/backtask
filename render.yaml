@@ -1,9 +1,1 @@
-# render.yaml
 
-services:
-  - name: miback
-    envVars:
-      - key: NODE_ENV
-        value: production
-    buildCommand: npm install
-    startCommand: npm start
