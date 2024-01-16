@@ -1,29 +1,25 @@
 const jsonServer = require("json-server");
 const fetch = require("node-fetch");
 const server = jsonServer.create();
-const masterKey = "$2a$10$OHQUQ5Pr4sVQgCbq9L7/yut67KgIRRWeLB8TXczMHI76bTu/NtW/m";
-const binUrl = "https://api.jsonbin.io/v3/b/65a5601d266cfc3fde78fe86";
+const fs = require("fs");
+const path = require("path");
+const filePath = path.join(__dirname, "db.json");
 
-// Esta función obtiene los datos desde JSONBin.io y establece 'db' cuando el servidor se inicia
-async function initData() {
+// Esta función obtiene los datos desde el archivo db.json y establece 'db' cuando el servidor se inicia
+function initData() {
   try {
-    const response = await fetch(binUrl, {
-      headers: {
-        "X-Master-Key": masterKey,
-      },
-    });
-    const data = await response.json();
-    console.log("Datos cargados correctamente desde JSONBin.io");
-    return data;
+    const data = fs.readFileSync(filePath, "utf8");
+    console.log("Datos cargados correctamente desde db.json");
+    return JSON.parse(data);
   } catch (error) {
-    console.error("Error al cargar datos desde JSONBin.io:", error);
+    console.error("Error al cargar datos desde db.json:", error);
     throw error;
   }
 }
 
 let db;
 
-// Llamas a la función para cargar los datos cuando el servidor se inicia
+// Llamamos a la función para cargar los datos cuando el servidor se inicia
 initData().then(initialData => {
   db = initialData;
 }).catch(err => {
@@ -37,23 +33,11 @@ server.post("/tasks", async (req, res) => {
     newTask.id = Date.now();
     db.tasks.push(newTask);
 
-    // Actualizar datos en JSONBin.io
-    const updateResponse = await fetch(binUrl, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Master-Key": masterKey,
-      },
-      body: JSON.stringify(db),
-    });
+    // Actualizar datos en el archivo db.json
+    fs.writeFileSync(filePath, JSON.stringify(db, null, 2));
 
-    if (updateResponse.ok) {
-      console.log("Datos actualizados correctamente en JSONBin.io");
-      res.json(newTask);
-    } else {
-      console.error("Error al actualizar datos en JSONBin.io:", updateResponse.statusText);
-      res.status(500).send('Error interno del servidor');
-    }
+    console.log("Datos actualizados correctamente en db.json");
+    res.json(newTask);
   } catch (error) {
     console.error('Error al agregar tarea:', error);
     res.status(500).send('Error interno del servidor');
@@ -69,6 +53,7 @@ server.get("/tasks", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
+// Escuchar en el puerto configurado por Render
 server.listen(PORT, () => {
   console.log(`JSON Server is running on port ${PORT}`);
 });
