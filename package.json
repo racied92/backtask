@@ -2,7 +2,7 @@
   "dependencies": {
     "json-server": "^0.17.4"
   },
-  "name": "back-argprograma-taskapp",
+  "name": "back-taskapp",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
