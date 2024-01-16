@@ -1,73 +1,82 @@
+const { createAppAuth } = require("@octokit/auth-app");
+const { request } = require("@octokit/request");
 const jsonServer = require("json-server");
-const fetch = require("node-fetch"); // Asegúrate de tener instalado el paquete 'node-fetch'
+const fetch = require("node-fetch");
+
 const server = jsonServer.create();
-const router = jsonServer.router("https://api.jsonbin.io/v3/b/65a5601d266cfc3fde78fe86/latest");
 const middlewares = jsonServer.defaults();
 
 server.use(jsonServer.bodyParser);
 server.use(middlewares);
 
-// Clave de API MASTER
-const masterKey = "$2a$10$OHQUQ5Pr4sVQgCbq9L7/yut67KgIRRWeLB8TXczMHI76bTu/NtW/m";
+const privateKey = `-----BEGIN PRIVATE KEY-----\n[Contenido de tu clave privada]\n-----END PRIVATE KEY-----`;
+const auth = createAppAuth({
+  appId: 797731,
+  privateKey: privateKey,
+  clientId: Iv1.e36fde8b5ca36539,
+  clientSecret: YOUR_CLIENT_SECRET,
+});
 
-// No necesitas inicializar 'db' con datos al comienzo ya que lo obtendrás de JSONBin.io
 let db;
 
-// Esta función obtiene los datos desde JSONBin.io y establece 'db' cuando el servidor se inicia
 async function initData() {
   try {
-    const response = await router.db.read({
+    const response = await auth({ type: "app" });
+    const { data } = await request("GET /repos/:owner/:repo/contents/:path", {
+      owner: "racied92",
+      repo: "backtask",
+      path: "db.json",
       headers: {
-        "X-MASTER-KEY": masterKey,
+        authorization: `token ${response.token}`,
       },
     });
-    db = response;
-    console.log("Datos cargados correctamente desde JSONBin.io");
+
+    const dbContent = Buffer.from(data.content, "base64").toString();
+    db = JSON.parse(dbContent);
+
+    console.log("Datos cargados correctamente desde GitHub");
   } catch (error) {
-    console.error("Error al cargar datos desde JSONBin.io:", error);
+    console.error("Error al cargar datos desde GitHub:", error);
   }
 }
 
-// Llamas a la función para cargar los datos cuando el servidor se inicia
 initData();
 
-// Agregar una nueva tarea (POST)
 server.post("/tasks", async (req, res) => {
   try {
     const newTask = req.body;
     newTask.id = Date.now();
     db.tasks.push(newTask);
 
-    // Actualizar datos en JSONBin.io utilizando fetch
-    const response = await fetch("https://api.jsonbin.io/v3/b/65a5601d266cfc3fde78fe86", {
+    const response = await fetch("https://api.github.com/repos/racied92/backtask/contents/db.json", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "X-Master-Key": masterKey,
+        authorization: `token ${response.token}`,
       },
-      body: JSON.stringify({ tasks: db.tasks }),
+      body: JSON.stringify({
+        message: "Actualizar db.json",
+        content: Buffer.from(JSON.stringify(db)).toString("base64"),
+        sha: data.sha,
+      }),
     });
 
-    // Verificar si la actualización fue exitosa
     if (response.ok) {
-      console.log("Datos actualizados correctamente en JSONBin.io");
+      console.log("Datos actualizados correctamente en GitHub");
       res.json(newTask);
     } else {
-      console.error("Error al actualizar datos en JSONBin.io:", response.statusText);
-      res.status(500).send('Error interno del servidor');
+      console.error("Error al actualizar datos en GitHub:", response.statusText);
+      res.status(500).send("Error interno del servidor");
     }
   } catch (error) {
-    console.error('Error al agregar tarea:', error);
-    res.status(500).send('Error interno del servidor');
+    console.error("Error al agregar tarea:", error);
+    res.status(500).send("Error interno del servidor");
   }
 });
 
-// Obtener todas las tareas (GET)
 server.get("/tasks", (req, res) => {
   res.json(db.tasks);
 });
-
-// Resto de las rutas...
 
 const PORT = process.env.PORT || 3000;
 
